@@ -1,0 +1,35 @@
+version: '3.7'
+
+services:
+  recordleveltenantdb:
+    container_name: recordleveltenantdb
+    image: mysql
+    environment:
+      MYSQL_DATABASE: tenantdb
+      MYSQL_ROOT_PASSWORD: recordleveltenancy
+    ports:
+      - "3306:3306"
+    networks:
+      - myNetwork
+    healthcheck:
+      test: ["CMD", "mysqladmin" ,"ping", "-h", "localhost"]
+      timeout: 20s
+      retries: 10
+
+  recordleveltenancy.api:
+    container_name: recordleveltenancy.api
+    build: 
+      context: .
+      dockerfile: RecordLevelTenancy/Dockerfile
+    ports:
+      - "7777:80"
+    depends_on:
+      recordleveltenantdb:
+        condition: service_healthy
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Docker
+    networks:
+      - myNetwork
+  
+networks:
+  myNetwork:

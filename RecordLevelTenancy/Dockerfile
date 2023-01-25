@@ -1,0 +1,22 @@
+﻿FROM mcr.microsoft.com/dotnet/aspnet:5.0 AS base
+WORKDIR /app
+EXPOSE 80
+EXPOSE 443
+
+FROM mcr.microsoft.com/dotnet/sdk:5.0 AS build
+WORKDIR /src
+COPY ["Core/Core.csproj", "Core/"]
+COPY ["Infrastructure/Infrastructure.csproj", "Infrastructure/"]
+COPY ["RecordLevelTenancy/RecordLevelTenancy.csproj", "RecordLevelTenancy/"]
+RUN dotnet restore "RecordLevelTenancy/RecordLevelTenancy.csproj"
+COPY . .
+WORKDIR "/src/RecordLevelTenancy"
+RUN dotnet build "RecordLevelTenancy.csproj" -c Release -o /app/build
+
+FROM build AS publish
+RUN dotnet publish "RecordLevelTenancy.csproj" -c Release -o /app/publish
+
+FROM base AS final
+WORKDIR /app
+COPY --from=publish /app/publish .
+ENTRYPOINT ["dotnet", "RecordLevelTenancy.dll"]
